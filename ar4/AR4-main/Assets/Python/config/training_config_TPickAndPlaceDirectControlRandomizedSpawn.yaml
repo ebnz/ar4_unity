@@ -1,0 +1,58 @@
+# Simple training configuration for Unity AR4 robot
+# This config is used for connecting to Unity Editor (not launching builds)
+# Just run this script while Unity Editor is in Play mode
+
+# Task configuration (optional - if not specified, uses settings below)
+task: "TPickAndPlaceDirectControlRandomizedSpawn"
+
+# Task definitions (same structure as Eureka config)
+tasks:
+  TPickAndPlaceDirectControlRandomizedSpawn:
+    name: "Pick Up Object and Place it in a Drop Zone with Direct Joint Control and Randomized Spawn"
+    description: "Pick up a cube and place it in a drop zone using direct joint control (no IK) - robot must navigate to cube, grasp it, and place it in the drop zone. The cube is spawned at a random position in the scene."
+    agent_file: "C:/Users/Kontor/Github Repos/AR4/Assets/Scripts/ml/RobotAgentTPickAndPlaceDirectControlRandomizedSpawn.cs"
+    
+# Training settings
+max_training_steps: 10000000
+max_episode_steps: 1000
+seed: 0
+
+# Optional: custom reward function
+# If null, uses the reward function defined in Unity editor
+reward_file: "C:/Users/Kontor/Github Repos/AR4/Assets/Scripts/rewards/reward_TPickAndPlaceDirectControl.txt"  # path to .cs file, or null for Unity default
+
+# PPO hyperparameters
+training:
+  algorithm: "PPO"
+  learning_rate: 0.0003
+  learning_rate_schedule: "linear"  # "constant" or "linear"
+  learning_rate_final: 0.00005  # final LR for linear schedule (keeps some adaptability for curriculum)
+  n_steps: 2048
+  batch_size: 256
+  n_epochs: 10
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  clip_range_vf: null
+  normalize_advantage: true
+  ent_coef: 0.02
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  use_sde: false
+  sde_sample_freq: -1
+  policy_kwargs:
+    net_arch: [256, 256]
+    activation_fn: "Tanh"  # or "ReLU"
+  verbose: 1
+  device: "auto"
+
+# Logging settings
+logging:
+  tensorboard: true
+  save_frequency: 10000  # Save model checkpoints every N steps
+  use_aggregation: true  # Unity stats logging mode (true = aggregated checkpoints, false = individual episodes)
+  stats_aggregation_interval: 5000  # Unity episode stats aggregation interval (only used if use_aggregation is true)
+
+# Output paths
+paths:
+  output_dir: null  # defaults to platform-specific location if null

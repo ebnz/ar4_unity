@@ -1,0 +1,29 @@
+{
+    "BallAgent": {
+        "checkpoints": [
+            {
+                "steps": 118264,
+                "file_path": "results\\Run1\\BallAgent\\BallAgent-118264.onnx",
+                "reward": 519.6273284174288,
+                "creation_time": 1747314073.3935542,
+                "auxillary_file_paths": [
+                    "results\\Run1\\BallAgent\\BallAgent-118264.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 118264,
+            "file_path": "results\\Run1\\BallAgent.onnx",
+            "reward": 519.6273284174288,
+            "creation_time": 1747314073.3935542,
+            "auxillary_file_paths": [
+                "results\\Run1\\BallAgent\\BallAgent-118264.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "1.1.0",
+        "torch_version": "2.7.0+cpu"
+    }
+}

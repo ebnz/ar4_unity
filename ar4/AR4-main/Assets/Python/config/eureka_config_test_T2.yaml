@@ -1,0 +1,30 @@
+# Eureka configuration for Unity AR4 robot tasks
+
+# General settings
+model: gpt-4.1  # or gpt-3.5-turbo for faster/cheaper iteration
+temperature: 1.0
+iterations: 5
+samples: 6  # Number of reward functions to generate per iteration
+
+# Task configurations
+tasks:
+  T2:
+    name: "Pick And Place"
+    description: "Pick up a cube from a fixed location and transfer it to another fixed drop zone."
+    success_threshold: 0.1
+    graspThreshold: 0.15
+    dropZoneThreshold: 0.2
+    max_episode_steps: 2000
+    training_steps: 100000
+    agent_file: "C:/Users/Kontor/Github Repos/AR4/Assets/Scripts/ml/RobotAgentT2.cs"
+    unity_build: "C:/Users/Kontor/Github Repos/AR4/Builds/T2/AR4.exe"
+
+# Logging settings
+logging:
+  tensorboard: true
+  save_frequency: 10000  # Save model checkpoints every N steps
+  
+# Paths
+paths:
+  output_dir: "C:/Users/Kontor/AppData/LocalLow/DefaultCompany/AR4/EurekaRewards/test"
+ 

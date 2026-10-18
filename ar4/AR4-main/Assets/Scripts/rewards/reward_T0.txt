@@ -1,0 +1,25 @@
+
+// Default T0 reward function - move to target task
+// Extract observations
+float currentDistanceToGoal = observations["DistanceToGoal"];
+
+// Moving closer reward
+rewards["Closer"] = - currentDistanceToGoal;
+
+// Time penalty
+rewards["TimePenalty"] = -0.001f;
+
+// Goal reached bonus
+float goalThreshold = (float)context["goalThreshold"];
+if (currentDistanceToGoal < goalThreshold)
+{
+    rewards["GoalReached"] = 10.0f;
+}
+
+// Example: Access Vector3 context variables
+// Vector3 targetPos = (Vector3)context["targetPosition"];
+// Vector3 goalPos = (Vector3)context["goalPosition"];
+// float directDistance = Vector3.Distance(targetPos, goalPos);
+
+// Note: 'rewards' dictionary and total calculation are auto-generated
+// Note: RewardResult return is auto-generated

@@ -1,0 +1,66 @@
+
+// Default T0 reward function - move to target task
+// Extract observations
+// Extract observations
+float gripperDistanceToCube = observations["GripperDistanceToCube"];
+float targetDistanceToCube = observations["TargetDistanceToCube"];
+float cubeHeight = observations["CubeHeight"];
+float heightDifference = observations["HeightDifference"];
+float isAtTargetHeight = observations["IsAtTargetHeight"];
+float holdProgress = observations["HoldProgress"];
+float gripperOpen = observations["GripperOpen"];
+float isGrasping = observations["IsGrasping"];
+
+// Extract context
+float previousDistanceToCube = (float)context["previousDistanceToCube"];
+float previousTargetDistanceToCube = (float)context["previousTargetDistanceToCube"];
+float previousCubeHeight = (float)context["previousCubeHeight"];
+float targetHeight = (float)context["targetHeight"];
+float heightTolerance = (float)context["heightTolerance"];
+int episodeSteps = (int)context["episodeSteps"];
+
+// Phase 1: Approach and grasp cube (before cube is grasped)
+if (isGrasping == 0f)
+{
+    // Reward for moving IK target closer to cube
+    // Skip on first step to avoid initialization artifacts
+    if (episodeSteps > 1)
+    {
+        float distanceDelta = previousTargetDistanceToCube - targetDistanceToCube;
+        rewards["MovingCloser"] = distanceDelta * 50f;
+    }
+}
+
+// Reward for grasping the cube
+if (isGrasping == 1f)
+{
+    rewards["GraspingReward"] = 0.1f;
+}
+
+// Reward for moving cube to target height
+if (isGrasping == 1f)
+{
+    
+    // Reward for being at target height
+    if (isAtTargetHeight == 1f)
+    {
+        rewards["AtTargetHeight"] = 2.0f;
+    }
+    
+    // Reward for making progress toward target height
+    float heightDelta = previousCubeHeight - cubeHeight;
+    if (Mathf.Abs(heightDelta) > 0.001f) // Only reward if there's actual movement
+    {
+        // Reward for moving toward target height
+        if ((cubeHeight < targetHeight && heightDelta > 0) || (cubeHeight > targetHeight && heightDelta < 0))
+        {
+            rewards["MovingToTargetHeight"] = heightDelta * 20f;
+        }
+    }
+}
+
+// Small time penalty to encourage efficiency
+rewards["TimePenalty"] = -0.0005f;
+
+// Note: 'rewards' dictionary and total calculation are auto-generated
+// Note: RewardResult return is auto-generated

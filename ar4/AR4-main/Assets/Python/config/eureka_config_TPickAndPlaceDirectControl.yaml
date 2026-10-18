@@ -1,0 +1,87 @@
+# Eureka configuration for TPickAndPlace with Direct Control task
+# LLM-based reward function generation and iteration
+
+# Task configuration
+task: "TPickAndPlaceDirect"
+
+tasks:
+  TPickAndPlaceDirectControl:
+    name: "Pick Up Object and Place it in a Drop Zone with Direct Joint Control"
+    description: "Pick up a cube and place it in a drop zone using direct joint control (no IK) - robot must navigate to cube, grasp it, and place it in the drop zone"
+    agent_file: "C:/Users/Kontor/Github Repos/AR4/Assets/Scripts/ml/RobotAgentTPickAndPlaceDirectControl.cs"
+    training_steps: 2000000
+    max_episode_steps: 1000
+    unity_build: "C:/Users/Kontor/Github Repos/AR4/Builds/TPickAndPlaceDirectControl/AR4.exe"
+
+# Eureka iteration settings
+iterations: 4  # Number of Eureka iterations
+samples: 5     # Number of reward function candidates per iteration
+
+# LLM settings
+model: "o4-mini"
+temperature: 1.0
+
+# Training settings (used for each candidate evaluation)
+max_training_steps: 2000000
+max_episode_steps: 1000
+seed: 0
+no_graphics: false
+
+# PPO hyperparameters (for evaluating each reward candidate)
+training:
+  algorithm: "PPO"
+  learning_rate: 0.0003  # 3e-4
+  n_steps: 1024
+  batch_size: 64
+  n_epochs: 10
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  clip_range_vf: null
+  normalize_advantage: true
+  ent_coef: 0.01
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  use_sde: false
+  sde_sample_freq: -1
+  policy_kwargs:
+    net_arch: [256, 256]
+    activation_fn: "Tanh"
+  verbose: 1
+  device: "auto"
+
+# Logging settings
+logging:
+  tensorboard: true
+  save_frequency: 10000  # Save checkpoints every N steps
+  use_aggregation: true  # Unity stats logging mode
+  stats_aggregation_interval: 5000
+
+# Output paths (will be created with timestamp)
+paths:
+  output_dir: "C:/Users/Kontor/AppData/LocalLow/DefaultCompany/AR4/EurekaRewards/"
+
+# Eureka-specific prompt settings
+eureka_prompts:
+  # Initial system prompt context
+  system_context: |
+    You are an expert in reinforcement learning reward design for robotic manipulation tasks.
+    The robot uses direct joint control with 7 continuous actions (joint deltas) and
+    1 discrete action (gripper: 0=no-action, 1=open, 2=close).
+
+  # Additional guidance for reward function generation
+  reward_guidelines: |
+    - Use delta-based rewards for progress (e.g., distance reduction)
+    - Avoid sparse rewards - provide continuous feedback
+    - Balance approach, grasp, and place phases
+    - Penalize undesired behaviors (table contact, dropping cube)
+    - Scale rewards appropriately (avoid extremely large values)
+    - Use the gripperAction context variable to reward proper gripper timing
+    - Use the cubeLiftHeight context variable to reward proper cube lift height
+    - Use the isSuccess context variable to reward successful placement
+    - Use the episodeSteps context variable to reward efficient behavior
+    - Use the previousDistanceToCube context variable to reward previous distance to cube
+    - Use the previousDistanceToDropZone context variable to reward previous distance to drop zone
+    - Use the dropZoneThreshold context variable to reward drop zone threshold
+    - Use the isGrasping context variable to reward proper grasping
+    - Use the gripperOpen context variable to reward proper gripper opening

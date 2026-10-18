@@ -1,0 +1,87 @@
+// TThrow reward function - maximize cube height while maintaining grasp
+// Uses direct joint control with physics-based GraspDetector
+
+// Extract observations
+float distanceToCube = observations["DistanceToCube"];
+float cubeHeight = observations["CubeHeight"];
+float cubeVelocityX = observations["CubeVelocity_X"];
+float cubeVelocityY = observations["CubeVelocity_Y"];
+float cubeVelocityZ = observations["CubeVelocity_Z"];
+float gripperPosition = observations["GripperPosition"]; // -1 (closed) to 1 (open)
+float touchingTable = observations["TouchingTable"]; // 1 if touching table, 0 otherwise
+
+// GraspDetector observations - accurate physics-based grasp detection
+float isGrasping = observations["IsGrasping"]; // 1 if cube is properly grasped
+float isInGripVolume = observations["IsInGripVolume"]; // 1 if cube is in grip volume trigger
+float isTouchingOutside = observations["IsTouchingOutside"]; // 1 if cube touching outside of grippers
+float leftInsideTouching = observations["LeftInsideTouching"]; // 1 if left inside gripper touching cube
+float rightInsideTouching = observations["RightInsideTouching"]; // 1 if right inside gripper touching cube
+
+// Extract context
+float previousDistanceToCube = (float)context["previousDistanceToCube"];
+float previousCubeHeight = (float)context["previousCubeHeight"];
+int episodeSteps = (int)context["episodeSteps"];
+bool cubeGrasped = (bool)context["cubeGrasped"];
+
+// Phase 1: Approach and grasp cube (before cube is grasped)
+if (isGrasping == 0f)
+{
+    // Reward for moving closer to cube
+    // Skip on first step to avoid initialization artifacts
+    if (episodeSteps > 1)
+    {
+        float distanceDelta = previousDistanceToCube - distanceToCube;
+        rewards["MovingCloser"] = distanceDelta * 40f;
+    }
+
+    // Progressive rewards for grasp detection stages
+    // Stage 1: Cube enters grip volume
+    if (isInGripVolume > 0.5f)
+    {
+        rewards["InGripVolume"] = 0.2f;
+    }
+
+    // Stage 3: Penalty for touching outside (wrong approach angle)
+    if (isTouchingOutside > 0.5f)
+    {
+        rewards["WrongApproach"] = -0.2f;
+    }
+}
+
+// Phase 2: Cube grasped - lift it as high as possible
+if (isGrasping == 1f)
+{
+    // Major reward for height while grasping
+    // Scale exponentially to heavily reward higher positions
+    if (cubeHeight > 0.8f) // Above initial spawn height
+    {
+        float heightAboveSpawn = cubeHeight - 0.9f;
+        rewards["HeightWhileGrasping"] = heightAboveSpawn * 0.2f;
+
+    }
+
+    // Reward for moving cube upward (height increase)
+    float heightDelta = cubeHeight - previousCubeHeight;
+    if (heightDelta > 0f)
+    {
+        rewards["RaisingCube"] = heightDelta * 40f;
+    }
+}
+
+// Penalty for touching the table
+if (touchingTable > 0.5f)
+{
+    rewards["TableContact"] = -0.2f;
+}
+
+// Penalty if cube falls below initial height without significant motion
+if (cubeHeight < 0.5f)
+{
+    rewards["CubeFallen"] = -5.0f;
+}
+
+// Small time penalty to encourage efficiency
+rewards["TimePenalty"] = -0.0005f;
+
+// Note: 'rewards' dictionary and total calculation are auto-generated
+// Note: RewardResult return is auto-generated

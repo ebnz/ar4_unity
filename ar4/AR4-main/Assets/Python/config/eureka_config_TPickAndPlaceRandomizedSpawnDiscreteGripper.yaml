@@ -1,0 +1,88 @@
+# Eureka configuration for TPickAndPlace with Randomized Spawn and Discrete Gripper task
+# LLM-based reward function generation and iteration
+
+# Task configuration
+task: "TPickAndPlaceRandomizedSpawnDiscreteGripper"
+
+tasks:
+  TPickAndPlaceRandomizedSpawnDiscreteGripper:
+    name: "Pick And Place Randomized Spawn Discrete Gripper"
+    description: "Pick up a cube from a randomized location and transfer it to another randomized drop zone. The robot uses direct joint control with discrete gripper actions (Open/Close/Hold)."
+    agent_file: "C:/Users/Kontor/Github Repos/AR4/Assets/Scripts/ml/RobotAgentTPickAndPlaceDirectControlRandomizedSpawnDiscreteGripper.cs"
+    training_steps: 2000000
+    max_episode_steps: 1000
+    unity_build: "C:/Users/Kontor/Github Repos/AR4/Builds/TPickAndPlaceRandomizedSpawnDiscreteGripper/AR4.exe"
+
+# Eureka iteration settings
+iterations: 3  # Number of Eureka iterations
+samples: 5     # Number of reward function candidates per iteration
+
+# LLM settings
+model: "gpt-4.1"
+temperature: 1.0
+
+# Training settings (used for each candidate evaluation)
+max_training_steps: 2000000
+max_episode_steps: 1000
+seed: 0
+no_graphics: false
+
+# PPO hyperparameters (for evaluating each reward candidate)
+training:
+  algorithm: "PPO"
+  learning_rate: 0.0003  # 3e-4
+  n_steps: 512
+  batch_size: 64
+  n_epochs: 10
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  clip_range_vf: null
+  normalize_advantage: true
+  ent_coef: 0.01
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  use_sde: false
+  sde_sample_freq: -1
+  policy_kwargs:
+    net_arch: [256, 256]
+    activation_fn: "Tanh"
+  verbose: 1
+  device: "auto"
+
+# Logging settings
+logging:
+  tensorboard: true
+  save_frequency: 10000  # Save checkpoints every N steps
+  use_aggregation: true  # Unity stats logging mode
+  stats_aggregation_interval: 5000
+
+# Output paths (will be created with timestamp)
+paths:
+  output_dir: "C:/Users/Kontor/AppData/LocalLow/DefaultCompany/AR4/EurekaRewards/"
+
+# Eureka-specific prompt settings
+eureka_prompts:
+  # Initial system prompt context
+  system_context: |
+    You are an expert in reinforcement learning reward design for robotic manipulation tasks.
+    The robot uses direct joint control with 6 continuous actions (joint deltas) and
+    1 discrete action for gripper control (0=Open, 1=Close, 2=Hold).
+
+  # Additional guidance for reward function generation
+  reward_guidelines: |
+    - Use delta-based rewards for progress (e.g., distance reduction)
+    - Avoid sparse rewards - provide continuous feedback
+    - Balance approach, grasp, and place phases
+    - Penalize undesired behaviors (table contact, dropping cube)
+    - Scale rewards appropriately (avoid extremely large values)
+    - GripperState observation (0=Open, 0.5=Closing, 1=Closed) reflects the COMMANDED state, not physical position
+    - Use IsGrasping observation to detect actual cube grasping (physical contact)
+    - Use the cubeLiftHeight context variable to reward proper cube lift height
+    - Use the isSuccess context variable to reward successful placement
+    - Use the episodeSteps context variable to reward efficient behavior
+    - Use the previousDistanceToCube context variable for approach progress
+    - Use the previousDistanceToDropZone context variable for transport progress
+    - Use the dropZoneThreshold context variable to determine success distance
+    - Reward closing gripper (GripperState > 0) when IsInGripVolume is true
+    - Reward opening gripper (GripperState == 0) when cube is in drop zone

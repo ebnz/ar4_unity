@@ -1,0 +1,22 @@
+
+// T0 reward function template - move to target task
+// Parameters: {distance_scale}, {time_penalty}, {goal_bonus}
+
+// Extract observations
+float currentDistanceToGoal = observations["DistanceToGoal"];
+
+// Moving closer reward (scaled by distance_scale parameter)
+rewards["Closer"] = -{distance_scale} * currentDistanceToGoal;
+
+// Time penalty (parametrized)
+rewards["TimePenalty"] = -{time_penalty};
+
+// Goal reached bonus (parametrized)
+float goalThreshold = (float)context["goalThreshold"];
+if (currentDistanceToGoal < goalThreshold)
+{
+    rewards["GoalReached"] = {goal_bonus};
+}
+
+// Note: 'rewards' dictionary and total calculation are auto-generated
+// Note: RewardResult return is auto-generated

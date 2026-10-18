@@ -1,0 +1,59 @@
+// TPickAndPlace reward function - pick up cube and place in drop zone
+// Extract observations
+float distanceToCube = observations["DistanceToCube"];
+float distanceToDropZone = observations["DistanceToDropZone"];
+float isGrasping = observations["IsGrasping"];
+
+// Extract context
+float previousDistanceToCube = (float)context["previousDistanceToCube"];
+float previousDistanceToDropZone = (float)context["previousDistanceToDropZone"];
+float dropZoneThreshold = (float)context["dropZoneThreshold"];
+int episodeSteps = (int)context["episodeSteps"];
+bool isSuccess = (bool)context["isSuccess"];
+float cubeLiftHeight = (float)context["cubeLiftHeight"];
+
+// Phase 1: Approach cube (before grasping)
+if (isGrasping == 0f)
+{
+    // Reward for moving closer to cube
+    if (episodeSteps > 1)
+    {
+        float distanceDelta = previousDistanceToCube - distanceToCube;
+        rewards["MovingToCube"] = distanceDelta * 25f;
+    }
+}
+
+// Phase 2: Grasping and lifting
+if (isGrasping == 1f)
+{
+    // Continuous reward for maintaining grasp
+    rewards["GraspingReward"] = 0.15f;
+
+    // Progressive lift reward - encourage lifting higher
+    if (cubeLiftHeight > 0.01f)
+    {
+        rewards["LiftReward"] = Mathf.Min(cubeLiftHeight * 3f, 0.4f);
+    }
+
+    // Reward for moving cube toward drop zone (main transport incentive)
+    if (episodeSteps > 1)
+    {
+        float dropZoneDelta = previousDistanceToDropZone - distanceToDropZone;
+        rewards["MovingToDropZone"] = dropZoneDelta * 150f;
+    }
+
+    // Bonus for being close to drop zone while grasping (ready to release)
+    if (distanceToDropZone < dropZoneThreshold * 2f)
+    {
+        rewards["NearDropZone"] = 0.3f;
+    }
+}
+
+// Phase 3: Successful placement
+if (isSuccess)
+{
+    rewards["SuccessfulPlacement"] = 1000.0f;
+}
+
+// Small time penalty
+rewards["TimePenalty"] = -0.005f;

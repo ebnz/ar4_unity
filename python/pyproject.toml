@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ar4_sim"
+version = "0.1.0"
+description = "Python client for the Unity AR4 robot arm simulator (lockstep, no ROS)"
+requires-python = ">=3.9"
+dependencies = ["numpy"]
+
+[project.optional-dependencies]
+ik = ["ikpy>=3.3"]
+dev = ["ikpy>=3.3", "pytest"]
+
+[tool.setuptools]
+packages = ["ar4_sim"]
+
+[tool.setuptools.package-data]
+ar4_sim = ["data/*.urdf"]

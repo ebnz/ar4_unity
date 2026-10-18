@@ -1,0 +1,14 @@
+{
+  "name": "T0_distance_scaling",
+  "description": "Sweep over distance reward scaling and time penalty for T0 task",
+  "template_path": "Scripts/rewards/reward_T0_template.txt",
+  "base_training_config": "Python/config/training_config_T0.yaml",
+  "parameter_grid": {
+    "distance_scale": [0.5, 1.0, 2.0, 5.0],
+    "time_penalty": [0.001, 0.005, 0.01],
+    "goal_bonus": [10.0]
+  },
+  "max_training_steps": 100000,
+  "parallel_runs": 2,
+  "seeds": [0, 1, 2]
+}

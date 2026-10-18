@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1045 &1
+EditorBuildSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Scenes:
+  - enabled: 0
+    path: Assets/Scenes/SampleScene.unity
+    guid: 99c9720ab356a0642a771bea13969a05
+  - enabled: 1
+    path: Assets/Scenes/T0.unity
+    guid: 7deb97a108829b24da3e4a2bd295ab5d
+  - enabled: 0
+    path: Assets/Scenes/TPickAndPlaceDirectControl.unity
+    guid: 4ed18abf79f4d6c4abb5333400abeaa6
+  - enabled: 0
+    path: Assets/Scenes/TPIckUpDirectControl.unity
+    guid: 6456ed4118c91c8419a67f539d1d68f3
+  - enabled: 0
+    path: Assets/Scenes/TPickAndPlaceDirectControlRandomizedSpawn.unity
+    guid: 64788d30694535449b237bfcc92c0f64
+  - enabled: 0
+    path: Assets/Scenes/TPickAndPlace.unity
+    guid: 4994188ca5f022948bd1ea4a2a87cf89
+  - enabled: 0
+    path: Assets/Scenes/TPickUp.unity
+    guid: 14c2d1d019ee531409378b664924e16d
+  m_configObjects:
+    com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+    com.unity.ml-agents.settings: {fileID: 11400000, guid: 16040936f8c9dcc4faa4b67d7545c802, type: 2}
+  m_UseUCBPForAssetBundles: 0

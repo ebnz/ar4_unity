@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: 2edac0b6f5e12204bbc4b9f4391db7ec
+timeCreated: 1487519992
+licenseType: Store
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 84074
+  packageName: Camera Path Creator
+  packageVersion: 1.2
+  assetPath: Assets/Addons/CameraPathCreator/Scripts/CPC_CameraPath.cs
+  uploadId: 179301

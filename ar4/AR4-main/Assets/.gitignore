@@ -1,0 +1,16 @@
+results
+MLStats
+__pycache__
+.claude
+.env
+ML-Agents
+ML-Agents.meta
+results.meta
+Python/models
+Python/ppo_robot_tensorboard
+Python/ppo_robot_sb3_tensorboard
+Python/ppo_robot_tensorboard
+ppo_sb3_tensorboard
+Python/models
+StreamingAssets
+StreamingAssets.meta

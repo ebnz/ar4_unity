@@ -1,0 +1,17 @@
+# Unity
+unity/AR4Sim/[Ll]ibrary/
+unity/AR4Sim/[Tt]emp/
+unity/AR4Sim/[Ll]ogs/
+unity/AR4Sim/[Uu]ser[Ss]ettings/
+unity/AR4Sim/[Oo]bj/
+unity/Logs/
+unity/Build/
+
+# Python
+.venv/
+__pycache__/
+*.egg-info/
+.pytest_cache/
+
+# upstream clone (see README for the commit)
+third_party/

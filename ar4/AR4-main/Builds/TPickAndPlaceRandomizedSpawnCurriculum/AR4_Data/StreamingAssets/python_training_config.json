@@ -1,0 +1,9 @@
+{
+  "run_id": 0,
+  "rewards_dir": "C:\\Users\\Kontor\\AppData/LocalLow/DefaultCompany/AR4/TrainingRuns\\training_run_20251128_173722\\rewards",
+  "results_dir": "C:\\Users\\Kontor\\AppData/LocalLow/DefaultCompany/AR4/TrainingRuns\\training_run_20251128_173722\\results",
+  "result_filename": "results_training_20251128_173722.json",
+  "max_episode_steps": 1000,
+  "use_aggregation": true,
+  "stats_aggregation_interval": 5000
+}

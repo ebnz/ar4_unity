@@ -1,0 +1,56 @@
+# Simple training configuration for Unity AR4 robot
+# This config is used for connecting to Unity Editor (not launching builds)
+# Just run this script while Unity Editor is in Play mode
+
+# Task configuration (optional - if not specified, uses settings below)
+task: "T0Discrete"
+
+# Task definitions (same structure as Eureka config)
+tasks:
+  T0Discrete:
+    name: "Move to Target"
+    description: "Move the robot end effector to reach a fixed target position"
+    agent_file: "C:/Users/Kontor/Github Repos/AR4/Assets/Scripts/ml/RobotAgentT0Discrete.cs"
+
+# Training settings
+max_training_steps: 100000
+max_episode_steps: 300
+seed: 0
+
+# Optional: custom reward function
+# If null, uses the reward function defined in Unity editor
+reward_file: null  # path to .cs file, or null for Unity default
+
+# PPO hyperparameters
+training:
+  algorithm: "PPO"
+  learning_rate: 0.0001  # 3e-4
+  n_steps: 1024
+  batch_size: 64
+  n_epochs: 10
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  clip_range_vf: null
+  normalize_advantage: true
+  ent_coef: 0.00
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  use_sde: false
+  sde_sample_freq: -1
+  policy_kwargs:
+    net_arch: [256, 256]
+    activation_fn: "Tanh"  # or "ReLU"
+  verbose: 1
+  device: "auto"
+
+# Logging settings
+logging:
+  tensorboard: true
+  save_frequency: 10000  # Save model checkpoints every N steps
+  use_aggregation: true  # Unity stats logging mode (true = aggregated checkpoints, false = individual episodes)
+  stats_aggregation_interval: 5000  # Unity episode stats aggregation interval (only used if use_aggregation is true)
+
+# Output paths
+paths:
+  output_dir: null  # defaults to platform-specific location if null
