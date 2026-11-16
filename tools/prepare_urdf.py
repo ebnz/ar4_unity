@@ -63,7 +63,7 @@ def main():
     args = ap.parse_args()
 
     if not DESC.is_dir():
-        sys.exit(f"missing {DESC}; clone https://github.com/ycheng517/ar4_ros_driver into third_party/")
+        sys.exit(f"missing {DESC}; run: git submodule update --init --recursive")
 
     with tempfile.TemporaryDirectory() as tmp:
         tmp_desc = Path(tmp) / PKG

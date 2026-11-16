@@ -12,7 +12,21 @@ Python (ar4_sim)  ── TCP 127.0.0.1:5005, one JSON object per line ──▶ 
 ```
 
 Robot model: `annin_ar4_description` from [ycheng517/ar4_ros_driver](https://github.com/ycheng517/ar4_ros_driver)
-(cloned at `4b88db1`), model **mk3**, gripper included.
+(git submodule at `third_party/ar4_ros_driver`, pinned to `4b88db1`), model **mk3**, gripper included.
+
+## Requirements
+
+- **Unity 6000.0.41f1** (Unity 6, revision `46e447368a18`), installed via Unity Hub. Needed to open
+  the project and to build the simulator player; other versions may re-import or upgrade the project.
+- Python 3 with `venv`.
+
+## Clone
+
+```bash
+git clone --recurse-submodules https://github.com/ebnz/ar4_unity.git
+```
+
+Already cloned without submodules? Run `git submodule update --init --recursive`.
 
 ## Quick start
 
@@ -87,10 +101,13 @@ Any language that can open a socket can drive the sim, e.g. `echo '{"id":1,"cmd"
 - **Built player:** `unity/Build/AR4Sim.x86_64 [-port 5005] [-dt 0.01]`. Add `-batchmode -nographics`
   for no window and no GPU, or only `-batchmode` for no window with rendering kept (`get_image` works).
   `SimProcess` does this for you.
-- **Unity Editor (6000.0.41f1):** open `unity/AR4Sim`, open scene `Assets/Scenes/AR4.unity`, press Play.
+- **Unity Editor (6000.0.41f1, see Requirements):** open `unity/AR4Sim`, open scene `Assets/Scenes/AR4.unity`, press Play.
   The bridge listens while in Play mode.
 
 ## Rebuilding
+
+`prepare_urdf.py` reads the robot description from the `third_party/ar4_ros_driver` submodule
+(see [Clone](#clone)).
 
 ```bash
 python/.venv/bin/python tools/prepare_urdf.py [--model mk1|mk2|mk3] [--no-gripper]   # xacro -> URDF + meshes

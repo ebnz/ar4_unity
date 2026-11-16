@@ -12,6 +12,3 @@ unity/Build/
 __pycache__/
 *.egg-info/
 .pytest_cache/
-
-# upstream clone (see README for the commit)
-third_party/
