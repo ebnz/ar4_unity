@@ -30,12 +30,54 @@ Already cloned without submodules? Run `git submodule update --init --recursive`
 
 ## Quick start
 
+All commands run from the repository root. The simulator player (`unity/Build/`) is not checked in,
+so a fresh clone has to build it once (steps 2–3).
+
+### 1. Install the dependencies
+
 ```bash
-# Python client (numpy + ikpy)
+# Python client (numpy + ikpy + pytest) in a local venv
 python3 -m venv python/.venv
 python/.venv/bin/pip install -e "python[dev]"
 
-# run an example against the prebuilt player (opens a window; --headless for none)
+# xacro, needed only to regenerate the robot mesh/URDF (step 2); no ROS install required
+python/.venv/bin/pip install xacro
+```
+
+Unity: install **Unity 6000.0.41f1** through Unity Hub (see [Requirements](#requirements)). The Linux
+editor includes Linux build support. Unity's URDF Importer (`com.unity.robotics.urdf-importer` v0.5.2)
+is listed in `unity/AR4Sim/Packages/manifest.json` and is fetched from GitHub the first time the
+project opens, so `git` must be on your `PATH` and the first run needs network access.
+
+### 2. Build the AR4 mesh / URDF
+
+```bash
+python/.venv/bin/python tools/prepare_urdf.py    # default: --model mk3 with gripper
+```
+
+This flattens the xacro from the `third_party/ar4_ros_driver` submodule and writes the URDF and
+meshes to `unity/AR4Sim/Assets/URDF/ar4/`, plus `python/ar4_sim/data/ar4.urdf` for ikpy.
+The generated files are checked in, so you can skip this step unless you change the model
+(`--model mk1|mk2|mk3`, `--no-gripper`). See [Rebuilding](#rebuilding) for details.
+
+### 3. Build the Unity scene and the player
+
+```bash
+tools/build_unity.sh                 # headless: imports the URDF, builds the scene and the Linux player
+```
+
+The script expects the editor at `~/Unity/Hub/Editor/6000.0.41f1/Editor/Unity`. If yours is elsewhere,
+set `UNITY=/path/to/Editor/Unity`. The first run takes longer because Unity imports the project and
+resolves packages. Output: `unity/Build/AR4Sim.x86_64`. Logs: `unity/Logs/BuildScene.log` and
+`unity/Logs/BuildPlayer.log`. Use `--skip-scene` to rebuild only the player from the existing scene.
+
+You can also do this in the Unity Editor: open `unity/AR4Sim`, then run **AR4 → Build Scene from URDF**
+and **AR4 → Build Linux Player**.
+
+### 4. Run an example
+
+```bash
+# starts the built player (opens a window; --headless for none)
 python/.venv/bin/python python/examples/pick_and_place.py --launch
 ```
 
