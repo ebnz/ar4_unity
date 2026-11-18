@@ -23,7 +23,18 @@ namespace AR4Sim
         float messageUntil;
         GUIStyle textStyle, buttonStyle;
 
-        public static string ScreenshotDir => Path.Combine(Path.GetDirectoryName(Application.dataPath) ?? ".", "Screenshots");
+        /// <summary>Screenshots/ next to the player (Linux: Build/, Windows: Build/Windows/,
+        /// macOS: next to AR4Sim.app, not inside it) or next to Assets/ in the Editor.</summary>
+        public static string ScreenshotDir
+        {
+            get
+            {
+                string dir = Path.GetDirectoryName(Application.dataPath) ?? ".";   // dataPath: <app>.app/Contents on macOS
+                if (Application.platform == RuntimePlatform.OSXPlayer)
+                    dir = Path.GetDirectoryName(dir) ?? ".";
+                return Path.Combine(dir, "Screenshots");
+            }
+        }
 
         public string Text
         {

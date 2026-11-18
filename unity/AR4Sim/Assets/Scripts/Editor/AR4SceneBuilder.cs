@@ -18,7 +18,9 @@ namespace AR4Sim.EditorTools
     {
         const string UrdfPath = "Assets/URDF/ar4/ar4.urdf";
         const string ScenePath = "Assets/Scenes/AR4.unity";
-        const string PlayerPath = "../Build/AR4Sim.x86_64";
+        const string PlayerPath = "../Build/AR4Sim.x86_64";               // Linux
+        const string WindowsPlayerPath = "../Build/Windows/AR4Sim.exe";
+        const string MacPlayerPath = "../Build/macOS/AR4Sim.app";
 
         [MenuItem("AR4/Build Scene from URDF")]
         public static void BuildScene()
@@ -130,23 +132,35 @@ namespace AR4Sim.EditorTools
         }
 
         [MenuItem("AR4/Build Linux Player")]
-        public static void BuildPlayer()
+        public static void BuildPlayer() => Build(BuildTarget.StandaloneLinux64, PlayerPath);
+
+        // Windows and macOS players need the "Windows Build Support (Mono)" and
+        // "Mac Build Support (Mono)" modules of the editor (Unity Hub -> Installs -> Add modules).
+        [MenuItem("AR4/Build Windows Player")]
+        public static void BuildWindowsPlayer() => Build(BuildTarget.StandaloneWindows64, WindowsPlayerPath);
+
+        [MenuItem("AR4/Build macOS Player")]
+        public static void BuildMacPlayer() => Build(BuildTarget.StandaloneOSX, MacPlayerPath);
+
+        static void Build(BuildTarget target, string path)
         {
             PlayerSettings.runInBackground = true;
             PlayerSettings.fullScreenMode = FullScreenMode.Windowed;
             PlayerSettings.defaultScreenWidth = 1280;
             PlayerSettings.defaultScreenHeight = 720;
             PlayerSettings.resizableWindow = true;
+            if (!BuildPipeline.IsBuildTargetSupported(BuildPipeline.GetBuildTargetGroup(target), target))
+                throw new System.Exception($"build support for {target} is not installed in this editor (Unity Hub -> Installs -> Add modules)");
             var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
             {
                 scenes = new[] { ScenePath },
-                locationPathName = PlayerPath,
-                target = BuildTarget.StandaloneLinux64,
+                locationPathName = path,
+                target = target,
                 options = BuildOptions.None,
             });
             if (report.summary.result != UnityEditor.Build.Reporting.BuildResult.Succeeded)
                 throw new System.Exception($"build failed: {report.summary.result}");
-            Debug.Log($"[AR4] player built: {Path.GetFullPath(PlayerPath)}");
+            Debug.Log($"[AR4] player built: {Path.GetFullPath(path)}");
         }
     }
 }

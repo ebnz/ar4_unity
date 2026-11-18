@@ -71,6 +71,11 @@ set `UNITY=/path/to/Editor/Unity`. The first run takes longer because Unity impo
 resolves packages. Output: `unity/Build/AR4Sim.x86_64`. Logs: `unity/Logs/BuildScene.log` and
 `unity/Logs/BuildPlayer.log`. Use `--skip-scene` to rebuild only the player from the existing scene.
 
+Windows and macOS players: add `--windows` (`unity/Build/Windows/AR4Sim.exe`) and/or `--macos`
+(`unity/Build/macOS/AR4Sim.app`). They need the editor modules "Windows Build Support (Mono)" and
+"Mac Build Support (Mono)" (Unity Hub → Installs → 6000.3.28f1 → Add modules), also from Linux.
+Start them with `unity\Build\Windows\AR4Sim.exe` (PowerShell) or `open unity/Build/macOS/AR4Sim.app`.
+
 You can also do this in the Unity Editor: open `unity/AR4Sim`, then run **AR4 → Build Scene from URDF**
 and **AR4 → Build Linux Player**.
 
