@@ -90,8 +90,8 @@ namespace AR4Sim.EditorTools
             }
 
             var cam = Camera.main;
-            cam.transform.position = new Vector3(0.85f, 0.65f, -0.65f);
-            cam.transform.LookAt(new Vector3(0.2f, 0.1f, 0.05f));
+            cam.transform.position = new Vector3(1.05f, 0.95f, -0.85f);
+            cam.transform.LookAt(new Vector3(0.15f, 0.18f, 0.0f));
             cam.nearClipPlane = 0.01f;
             cam.fieldOfView = 45f;
 
