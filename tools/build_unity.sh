@@ -3,7 +3,7 @@
 #   UNITY=/path/to/Editor/Unity tools/build_unity.sh [--skip-scene]
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-UNITY="${UNITY:-$HOME/Unity/Hub/Editor/6000.0.41f1/Editor/Unity}"
+UNITY="${UNITY:-$HOME/Unity/Hub/Editor/6000.3.28f1/Editor/Unity}"
 PROJECT="$ROOT/unity/AR4Sim"
 mkdir -p "$ROOT/unity/Logs"
 

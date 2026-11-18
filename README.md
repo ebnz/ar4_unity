@@ -16,7 +16,7 @@ Robot model: `annin_ar4_description` from [ycheng517/ar4_ros_driver](https://git
 
 ## Requirements
 
-- **Unity 6000.0.41f1** (Unity 6, revision `46e447368a18`), installed via Unity Hub. Needed to open
+- **Unity 6000.3.28f1** (Unity 6.3 LTS, revision `8f082d2fe476`), installed via Unity Hub. Needed to open
   the project and to build the simulator player; other versions may re-import or upgrade the project.
 - Python 3 with `venv`.
 
@@ -44,7 +44,7 @@ python/.venv/bin/pip install -e "python[dev]"
 python/.venv/bin/pip install xacro
 ```
 
-Unity: install **Unity 6000.0.41f1** through Unity Hub (see [Requirements](#requirements)). The Linux
+Unity: install **Unity 6000.3.28f1** through Unity Hub (see [Requirements](#requirements)). The Linux
 editor includes Linux build support. Unity's URDF Importer (`com.unity.robotics.urdf-importer` v0.5.2)
 is listed in `unity/AR4Sim/Packages/manifest.json` and is fetched from GitHub the first time the
 project opens, so `git` must be on your `PATH` and the first run needs network access.
@@ -66,7 +66,7 @@ The generated files are checked in, so you can skip this step unless you change 
 tools/build_unity.sh                 # headless: imports the URDF, builds the scene and the Linux player
 ```
 
-The script expects the editor at `~/Unity/Hub/Editor/6000.0.41f1/Editor/Unity`. If yours is elsewhere,
+The script expects the editor at `~/Unity/Hub/Editor/6000.3.28f1/Editor/Unity`. If yours is elsewhere,
 set `UNITY=/path/to/Editor/Unity`. The first run takes longer because Unity imports the project and
 resolves packages. Output: `unity/Build/AR4Sim.x86_64`. Logs: `unity/Logs/BuildScene.log` and
 `unity/Logs/BuildPlayer.log`. Use `--skip-scene` to rebuild only the player from the existing scene.
@@ -143,7 +143,7 @@ Any language that can open a socket can drive the sim, e.g. `echo '{"id":1,"cmd"
 - **Built player:** `unity/Build/AR4Sim.x86_64 [-port 5005] [-dt 0.01]`. Add `-batchmode -nographics`
   for no window and no GPU, or only `-batchmode` for no window with rendering kept (`get_image` works).
   `SimProcess` does this for you.
-- **Unity Editor (6000.0.41f1, see Requirements):** open `unity/AR4Sim`, open scene `Assets/Scenes/AR4.unity`, press Play.
+- **Unity Editor (6000.3.28f1, see Requirements):** open `unity/AR4Sim`, open scene `Assets/Scenes/AR4.unity`, press Play.
   The bridge listens while in Play mode.
 
 ## Rebuilding
