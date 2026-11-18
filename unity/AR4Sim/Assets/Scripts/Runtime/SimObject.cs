@@ -22,10 +22,21 @@ namespace AR4Sim
             Body.position = pos;
             Body.rotation = rot;
             transform.SetPositionAndRotation(pos, rot);
-            Body.linearVelocity = Vector3.zero;
-            Body.angularVelocity = Vector3.zero;
+            if (!Body.isKinematic)
+            {
+                Body.linearVelocity = Vector3.zero;
+                Body.angularVelocity = Vector3.zero;
+            }
         }
 
         public void ResetPose() => SetWorldPose(initialPos, initialRot);
+
+        /// <summary>Kinematic objects are only moved by SetWorldPose (viewer mode); others by physics.</summary>
+        public void SetKinematic(bool kinematic) => Body.isKinematic = kinematic;
+
+        public void SetVisible(bool visible)
+        {
+            foreach (var r in GetComponentsInChildren<Renderer>()) r.enabled = visible;
+        }
     }
 }

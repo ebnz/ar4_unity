@@ -24,9 +24,10 @@ namespace AR4Sim
     /// </summary>
     public class BridgeServer : MonoBehaviour
     {
-        public const string ProtocolVersion = "1.0";
+        public const string ProtocolVersion = "1.1";
 
         public AR4Controller robot;
+        public Overlay overlay;
         public int port = 5005;
         [Tooltip("Physics time step [s]")]
         public float dt = 0.01f;
@@ -55,6 +56,11 @@ namespace AR4Sim
         volatile bool running;
         long stepCount;
         SimObject[] objects;
+        // Viewer mode (after set_kinematic_state, until reset): a physics-free copy of the robot is
+        // shown and objects are kinematic. Physics is not stepped. (Toggling collision filters
+        // instead crashes PhysX 4.1 with articulations.)
+        RobotView view;
+        bool ViewerMode => view != null && view.Active;
 
         void Awake()
         {
@@ -68,10 +74,12 @@ namespace AR4Sim
         void Start()
         {
             if (robot == null) robot = FindAnyObjectByType<AR4Controller>();
+            if (overlay == null) overlay = FindAnyObjectByType<Overlay>();
             objects = FindObjectsByType<SimObject>(FindObjectsSortMode.InstanceID).OrderBy(o => o.name).ToArray();
             // Let the scene settle once so objects rest on the ground before the first client connects.
             for (int i = 0; i < 50; i++) robot.Step(dt);
             stepCount = 0;
+            view = RobotView.Create(robot);
 
             listener = new TcpListener(IPAddress.Loopback, port);
             listener.Start();
@@ -127,6 +135,7 @@ namespace AR4Sim
             {
                 int wait = Math.Max(0, (int)(serviceBudgetMs - budget.ElapsedMilliseconds));
                 if (!inbox.TryTake(out var msg, wait)) break;
+                if (TryHandleDeferred(msg.client, msg.line)) continue;
                 msg.client.Send(Handle(msg.line));
             }
         }
@@ -153,6 +162,42 @@ namespace AR4Sim
             {
                 return new JObject { ["id"] = id, ["ok"] = false, ["error"] = e.Message }.ToString(Newtonsoft.Json.Formatting.None);
             }
+        }
+
+        /// <summary>Commands whose reply is sent later (after a frame was rendered).</summary>
+        bool TryHandleDeferred(Client client, string line)
+        {
+            JObject req;
+            try { req = JObject.Parse(line); }
+            catch (Exception) { return false; }   // Handle() reports the parse error
+            if ((string)req["cmd"] != "screenshot") return false;
+            JToken id = req["id"];
+            void Fail(string error) =>
+                client.Send(new JObject { ["id"] = id, ["ok"] = false, ["error"] = error }.ToString(Newtonsoft.Json.Formatting.None));
+            if (overlay == null) { Fail("no Overlay in the scene"); return true; }
+            if (Application.isBatchMode) { Fail("screenshot needs a window (player started with -batchmode)"); return true; }
+            StartCoroutine(overlay.Capture(tex =>
+            {
+                var png = tex.EncodeToPNG();
+                int w = tex.width, h = tex.height;
+                Destroy(tex);
+                client.Send(new JObject { ["id"] = id, ["ok"] = true, ["png"] = Convert.ToBase64String(png), ["width"] = w, ["height"] = h }
+                    .ToString(Newtonsoft.Json.Formatting.None));
+            }));
+            return true;
+        }
+
+        /// <summary>Viewer mode on/off: show the physics-free robot copy, make objects kinematic.</summary>
+        void SetViewerMode(bool on)
+        {
+            if (ViewerMode == on) return;
+            view.SetActive(on);
+            foreach (var o in objects)
+            {
+                o.SetKinematic(on);
+                if (!on) o.SetVisible(true);
+            }
+            if (!on && overlay != null) overlay.simTime = -1;
         }
 
         JObject Dispatch(string cmd, JObject req)
@@ -212,10 +257,44 @@ namespace AR4Sim
                     return new JObject { ["reached"] = settled >= settle, ["steps"] = steps, ["state"] = State() };
                 }
 
+                case "set_kinematic_state":
+                {
+                    // Show a state computed elsewhere: teleport robot and objects, no dynamics.
+                    var q = FloatArray(req, "q", 6);
+                    float g = (float?)req["gripper"] ?? robot.GripperMax;
+                    SetViewerMode(true);
+                    view.SetState(q, g);
+                    if (req["objects"] is JArray objs)
+                        foreach (JObject o in objs)
+                        {
+                            string name = Required<string>(o, "name");
+                            var obj = objects.FirstOrDefault(x => x.name == name) ?? throw new ArgumentException($"unknown object '{name}'");
+                            if (o["position"] != null)
+                            {
+                                var p = FloatArray(o, "position", 3);
+                                var r = o["orientation"] != null ? FloatArray(o, "orientation", 4) : new[] { 0f, 0f, 0f, 1f };
+                                var baseT = robot.BaseLink;
+                                obj.SetWorldPose(baseT.TransformPoint(new Vector3(p[0], p[1], p[2]).Ros2Unity()),
+                                                 baseT.rotation * new Quaternion(r[0], r[1], r[2], r[3]).Ros2Unity());
+                            }
+                            if (o["visible"] != null) obj.SetVisible((bool)o["visible"]);
+                        }
+                    if (req["time"] != null && overlay != null) overlay.simTime = (double)req["time"];
+                    return new JObject { ["state"] = State() };
+                }
+
+                case "set_overlay":
+                    if (overlay == null) throw new InvalidOperationException("no Overlay in the scene");
+                    if (req["group"] != null) overlay.group = (string)req["group"];
+                    if (req["task"] != null) overlay.task = (string)req["task"];
+                    if (req["time"] != null) overlay.simTime = (double)req["time"];
+                    return new JObject { ["text"] = overlay.Text };
+
                 case "reset":
                 {
                     var q = req["q"] != null ? FloatArray(req, "q", 6) : new float[6];
                     float g = (float?)req["gripper"] ?? robot.GripperMax;
+                    SetViewerMode(false);   // back to physics
                     robot.Reset(q, g);
                     if ((bool?)req["reset_objects"] ?? true)
                         foreach (var o in objects) o.ResetPose();
@@ -346,6 +425,26 @@ namespace AR4Sim
 
         JObject State()
         {
+            if (ViewerMode)
+            {
+                var vf = view.FlangePose;
+                var vt = view.TcpPose;
+                var zeros = new JArray(new float[6]);
+                return new JObject
+                {
+                    ["step"] = stepCount,
+                    ["time"] = stepCount * (double)dt,
+                    ["q"] = new JArray(view.Q),
+                    ["dq"] = zeros,
+                    ["effort"] = new JArray(new float[6]),
+                    ["goal"] = new JArray(view.Q),
+                    ["at_goal"] = true,
+                    ["gripper"] = view.Gripper,
+                    ["gripper_goal"] = view.Gripper,
+                    ["flange_pose"] = Pose(vf.pos, vf.rot),
+                    ["tcp_pose"] = Pose(vt.pos, vt.rot),
+                };
+            }
             var flange = robot.FlangePose;
             var tcp = robot.TcpPose;
             return new JObject

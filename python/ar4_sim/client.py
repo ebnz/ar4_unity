@@ -115,6 +115,27 @@ class AR4Sim:
                             target=None if target is None else list(map(float, target)))
         return base64.b64decode(r["png"])
 
+    # -- viewer mode (show states computed by an external kinematic simulator) ---------
+    def set_kinematic_state(self, q: Sequence[float], gripper: float | None = None, objects: list[dict] | None = None,
+                            time: float | None = None) -> State:
+        """Teleport robot (q [rad], jaw opening per side [m]) and objects without dynamics.
+
+        objects: list of {"name", "position" (3), "orientation" (xyzw, optional), "visible" (optional)}.
+        Switches the simulator to viewer mode (objects kinematic, robot ignores collisions with
+        the world) until the next reset().
+        """
+        r = self._conn.call("set_kinematic_state", q=np.asarray(q, dtype=float), gripper=gripper,
+                            objects=objects, time=time)
+        return State.from_dict(r["state"])
+
+    def set_overlay(self, group: str | None = None, task: str | None = None, time: float | None = None) -> str:
+        """Set the overlay text (group ID, task ID, simulation time); returns the shown text."""
+        return self._conn.call("set_overlay", group=group, task=task, time=time)["text"]
+
+    def screenshot(self) -> bytes:
+        """PNG of the game window including the overlay text. Needs a window (not -batchmode)."""
+        return base64.b64decode(self._conn.call("screenshot")["png"])
+
     # -- convenience -------------------------------------------------------
     def move_joints(self, q: Sequence[float], speed: float = 0.5, timeout: float = 20.0) -> State:
         """Move to q [rad] and block (in simulated time) until reached. Raises TimeoutError."""

@@ -99,6 +99,22 @@ with SimProcess(headless=True), AR4Sim() as sim:   # or start the player / Unity
 Conventions: radians, meters, xyzw quaternions, all in the robot's `base_link` frame (ROS
 convention; the robot faces −Y). The TCP is 55 mm past the flange (`ee_link`), between the finger pads.
 
+## Viewer mode and overlay
+
+The RMI course code (`rmi.sim`) simulates the arm kinematically in Python and uses Unity only to show
+the result. `set_kinematic_state` switches to **viewer mode**: a physics-free copy of the robot's
+visuals is posed directly from `q` (and the jaw opening), the objects become kinematic and are placed
+where Python says, and physics is not stepped. The reported `tcp_pose` matches ikpy FK (< 0.1 mm).
+`reset()` returns to the physics simulation.
+
+The window shows an overlay "Group | Task | date time | t" (set with `set_overlay`) and a
+**Screenshot** button. The button saves `Screenshots/<task>_<yyyyMMdd_HHmmss>.png` next to the player
+(`unity/Build/Screenshots/`), or `unity/AR4Sim/Screenshots/` in the Editor. `screenshot()` returns
+the same image to Python. Both need a window, i.e. not `-batchmode`.
+
+The scene contains a table (top at z = 0 of `base_link`), an open bin, and three 2 cm cubes. Table and
+bin dimensions must match `rmi/ar4.py` of the course repository.
+
 ## Lockstep and latency
 
 Nothing moves between calls. `step(n)` advances n × `dt` (default 10 ms, `-dt` on the command line).
@@ -123,6 +139,8 @@ after it is issued. See `examples/latency_demo.py`.
 | `get_objects()`, `set_object_pose(name, pos, quat)` | the three 2 cm cubes |
 | `get_image(width, height, eye=None, target=None)` → PNG bytes | needs a graphics device (not `headless=True`; use `SimProcess(offscreen=True)`) |
 | `kinematics.fk(q)`, `kinematics.ik(pos, quat, q0)`, `solve_ik(...)` | ikpy on the same URDF |
+| `set_kinematic_state(q, gripper, objects, time)` | viewer mode: show a state computed elsewhere (see below) |
+| `set_overlay(group, task, time)`, `screenshot()` → PNG bytes | overlay text; screenshot of the window incl. overlay (needs a window) |
 | `call(cmd, **args)` | raw protocol access |
 
 ## Protocol
@@ -133,6 +151,8 @@ Request `{"id": 7, "cmd": "<name>", ...args}\n`, reply `{"id": 7, "ok": true, ..
 `ping`, `get_info`, `get_state`, `set_joint_targets {q[6], speed}`, `set_gripper {position}`,
 `step {n}`, `step_until {max_steps, tol, settle_steps}`, `reset {q?, gripper?, reset_objects?}`,
 `get_objects`, `set_object_pose {name, position, orientation}`, `get_image {width, height, eye?, target?, fov?}`,
+`set_kinematic_state {q[6], gripper?, objects?: [{name, position?, orientation?, visible?}], time?}`,
+`set_overlay {group?, task?, time?}`, `screenshot` (reply `{png, width, height}`),
 `set_params {arm_stiffness, arm_damping, arm_force_limit, gripper_stiffness, gripper_damping, gripper_force_limit, gripper_max_velocity}`,
 `get_bodies` (diagnostics).
 

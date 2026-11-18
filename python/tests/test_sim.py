@@ -108,3 +108,54 @@ def test_pick_up_cube(sim):
     assert s.gripper == pytest.approx(0.0096, abs=5e-4)  # stopped by the 20 mm cube
     sim.move_linear(cube + [0, 0, 0.10], rpy=DOWN, speed=0.1)
     assert sim.get_objects()["cube_red"].position[2] > 0.09
+
+
+# -- viewer mode (states from an external kinematic simulator) -------------------------------
+def test_kinematic_state_matches_fk(sim):
+    rng = np.random.default_rng(1)
+    for _ in range(5):
+        q = rng.uniform(sim.lower * 0.8, sim.upper * 0.8)
+        s = sim.set_kinematic_state(q, gripper=0.005)
+        np.testing.assert_allclose(s.q, q, atol=1e-4)
+        fk = sim.kinematics.fk(q)
+        np.testing.assert_allclose(s.tcp_pose.position, fk.position, atol=1e-4)
+        assert abs(np.dot(s.tcp_pose.orientation, fk.orientation)) == pytest.approx(1, abs=1e-5)
+
+
+def test_kinematic_state_ignores_world(sim):
+    # joint_2 at +90 deg puts the forearm into the table: in viewer mode it is shown anyway
+    q = [0, np.pi / 2, 0, 0, 0, 0]
+    s = sim.set_kinematic_state(q)
+    np.testing.assert_allclose(s.q, q, atol=1e-3)
+
+
+def test_kinematic_objects(sim):
+    s = sim.set_kinematic_state(np.zeros(6), objects=[
+        {"name": "cube_red", "position": [0.1, -0.35, 0.3]},
+        {"name": "cube_blue", "visible": False}])
+    for _ in range(3):                              # kinematic: does not fall
+        s = sim.set_kinematic_state(s.q)
+    np.testing.assert_allclose(sim.get_objects()["cube_red"].position, [0.1, -0.35, 0.3], atol=1e-5)
+
+
+def test_physics_restored_after_reset(sim):
+    sim.set_kinematic_state(np.zeros(6), objects=[{"name": "cube_red", "position": [0.1, -0.35, 0.3]}])
+    sim.reset()
+    # the floor collision is back
+    with pytest.raises(TimeoutError):
+        sim.move_joints([0, np.pi / 2, 0, 0, 0, 0], speed=1.0, timeout=5.0)
+    # cubes are dynamic again: one lifted cube falls back onto the table
+    sim.set_object_pose("cube_red", [0.0, -0.30, 0.10])
+    sim.step(100)
+    assert sim.get_objects()["cube_red"].position[2] == pytest.approx(0.01, abs=2e-3)
+
+
+def test_overlay_text(sim):
+    text = sim.set_overlay(group="G00", task="T1", time=1.25)
+    assert text.startswith("Group G00  |  Task T1  |")
+    assert text.endswith("t = 1.2 s") or text.endswith("t = 1.3 s")  # 1.25 rounds either way
+
+
+def test_screenshot_needs_window(sim):
+    with pytest.raises(BridgeError, match="window"):
+        sim.screenshot()

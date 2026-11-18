@@ -13,3 +13,4 @@ __pycache__/
 *.egg-info/
 .pytest_cache/
 build/
+unity/AR4Sim/Screenshots/
