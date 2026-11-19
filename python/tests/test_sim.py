@@ -159,3 +159,24 @@ def test_overlay_text(sim):
 def test_screenshot_needs_window(sim):
     with pytest.raises(BridgeError, match="window"):
         sim.screenshot()
+
+
+def test_kinematic_state_animation_reports_target(sim):
+    sim.set_kinematic_state(np.zeros(6))
+    q = np.array([0.4, 0.3, -0.2, 0.5, 0.6, -0.4])
+    s = sim.set_kinematic_state(q, objects=[{"name": "cube_red", "position": [0.1, -0.35, 0.2], "attached": True}],
+                                duration=1.0)
+    # replies give the target state immediately, while Unity is still moving the display
+    np.testing.assert_allclose(s.q, q, atol=1e-4)
+    np.testing.assert_allclose(s.tcp_pose.position, sim.kinematics.fk(q).position, atol=1e-4)
+    np.testing.assert_allclose(sim.get_objects()["cube_red"].position, [0.1, -0.35, 0.2], atol=1e-5)
+    # a new state during the motion starts from the shown pose; reset ends viewer mode cleanly
+    s = sim.set_kinematic_state(np.zeros(6), duration=0.5)
+    np.testing.assert_allclose(s.q, 0, atol=1e-4)
+    sim.reset()
+    assert sim.step(10).step == 10
+
+
+def test_kinematic_state_rejects_negative_duration(sim):
+    with pytest.raises(BridgeError, match="duration"):
+        sim.set_kinematic_state(np.zeros(6), duration=-1)

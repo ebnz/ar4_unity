@@ -110,6 +110,10 @@ The RMI course code (`rmi.sim`) simulates the arm kinematically in Python and us
 the result. `set_kinematic_state` switches to **viewer mode**: a physics-free copy of the robot's
 visuals is posed directly from `q` (and the jaw opening), the objects become kinematic and are placed
 where Python says, and physics is not stepped. The reported `tcp_pose` matches ikpy FK (< 0.1 mm).
+With `duration` > 0 the display moves smoothly (linearly in joint space) from the pose it shows to the
+new state within that time; objects marked `attached` move rigidly with the gripper meanwhile. Replies
+(`state`, `get_objects`) always give the new (target) state; `screenshot` waits until the motion has
+finished, `get_image` completes it immediately.
 `reset()` returns to the physics simulation.
 
 The window shows an overlay "Group | Task | date time | t" (set with `set_overlay`) and a
@@ -156,8 +160,8 @@ Request `{"id": 7, "cmd": "<name>", ...args}\n`, reply `{"id": 7, "ok": true, ..
 `ping`, `get_info`, `get_state`, `set_joint_targets {q[6], speed}`, `set_gripper {position}`,
 `step {n}`, `step_until {max_steps, tol, settle_steps}`, `reset {q?, gripper?, reset_objects?}`,
 `get_objects`, `set_object_pose {name, position, orientation}`, `get_image {width, height, eye?, target?, fov?}`,
-`set_kinematic_state {q[6], gripper?, objects?: [{name, position?, orientation?, visible?}], time?}`,
-`set_overlay {group?, task?, time?}`, `screenshot` (reply `{png, width, height}`),
+`set_kinematic_state {q[6], gripper?, objects?: [{name, position?, orientation?, visible?, attached?}], time?, duration?}`,
+`set_overlay {group?, task?, time?}`, `screenshot {wait?}` (reply `{png, width, height}`; `wait: false` captures without waiting for a running motion),
 `set_params {arm_stiffness, arm_damping, arm_force_limit, gripper_stiffness, gripper_damping, gripper_force_limit, gripper_max_velocity}`,
 `get_bodies` (diagnostics).
 

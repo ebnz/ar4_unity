@@ -36,6 +36,8 @@ namespace AR4Sim
         {
             var view = new GameObject("AR4_View").AddComponent<RobotView>();
             view.Build(robot);
+            view.qTo = new float[6];
+            view.gTo = robot.GripperMax;
             view.SetActive(false);
             return view;
         }
@@ -85,20 +87,65 @@ namespace AR4Sim
             foreach (var r in realRenderers) r.enabled = !on;
         }
 
-        /// <summary>Pose the view: arm joints q [rad], jaw opening per side [m].</summary>
-        public void SetState(float[] q, float gripper)
+        // Animation: the view moves from the pose shown when a new state arrives (from) to the new
+        // state (to) within `duration` seconds, linearly in joint space. Q / Gripper are the target.
+        float[] qFrom = new float[6], qTo = new float[6];
+        float gFrom, gTo, t0, duration;
+
+        float Alpha => duration <= 0 ? 1f : Mathf.Clamp01((Time.unscaledTime - t0) / duration);
+        public bool Animating => Active && duration > 0 && Alpha < 1f;
+
+        /// <summary>Set the target state: arm joints q [rad], jaw opening per side [m]. With
+        /// duration > 0 the view moves there smoothly from the pose it shows now.</summary>
+        public void SetState(float[] q, float gripper, float duration = 0f)
         {
-            Q = robot.Clamp(q);
-            Gripper = Mathf.Clamp(gripper, robot.GripperMin, robot.GripperMax);
+            ShownPose(out var qNow, out var gNow);
+            qFrom = qNow;
+            gFrom = gNow;
+            qTo = robot.Clamp(q);
+            gTo = Mathf.Clamp(gripper, robot.GripperMin, robot.GripperMax);
+            Q = (float[])qTo.Clone();
+            Gripper = gTo;
+            t0 = Time.unscaledTime;
+            this.duration = Mathf.Max(0f, duration);
+            if (this.duration <= 0f) Apply(qTo, gTo);
+        }
+
+        /// <summary>Jump to the end of the current animation.</summary>
+        public void Finish()
+        {
+            duration = 0f;
+            Apply(qTo, gTo);
+        }
+
+        void Update()
+        {
+            if (duration <= 0f) return;
+            float a = Alpha;
+            ShownPose(out var q, out var g);
+            Apply(q, g);
+            if (a >= 1f) duration = 0f;
+        }
+
+        void ShownPose(out float[] q, out float g)
+        {
+            float a = Alpha;
+            q = new float[6];
+            for (int i = 0; i < 6; i++) q[i] = Mathf.Lerp(qFrom[i], qTo[i], a);
+            g = Mathf.Lerp(gFrom, gTo, a);
+        }
+
+        void Apply(float[] q, float gripper)
+        {
             foreach (var l in links)
             {
                 int arm = System.Array.IndexOf(ArmLinkNames, l.Name);
                 Quaternion jr = Quaternion.identity;
                 Vector3 jt = Vector3.zero;
                 if (l.Type == ArticulationJointType.RevoluteJoint && arm >= 0)
-                    jr = Quaternion.AngleAxis(Q[arm] * Mathf.Rad2Deg, Vector3.right);
+                    jr = Quaternion.AngleAxis(q[arm] * Mathf.Rad2Deg, Vector3.right);
                 else if (l.Type == ArticulationJointType.PrismaticJoint)
-                    jt = Vector3.right * Gripper;
+                    jt = Vector3.right * gripper;
                 // child pose in parent = P * J * A^-1, with P = parent anchor, A = anchor (in child)
                 Quaternion rot = l.ParentAnchorRot * jr * Quaternion.Inverse(l.AnchorRot);
                 Vector3 pos = l.ParentAnchorPos + l.ParentAnchorRot * jt - rot * l.AnchorPos;
@@ -107,17 +154,33 @@ namespace AR4Sim
             }
         }
 
+        /// <summary>Evaluate f with the view posed at the target state (restores the shown pose).</summary>
+        T AtTarget<T>(System.Func<T> f)
+        {
+            if (duration <= 0f) return f();
+            ShownPose(out var q, out var g);
+            Apply(qTo, gTo);
+            var result = f();
+            Apply(q, g);
+            return result;
+        }
+
+        /// <summary>The view's ee_link (moves with the shown pose).</summary>
+        public Transform Ee => viewEe;
+
+        /// <summary>World pose of ee_link at the target state.</summary>
+        public (Vector3 pos, Quaternion rot) TargetEeWorld => AtTarget(() => (viewEe.position, viewEe.rotation));
+
         static readonly string[] ArmLinkNames = { "link_1", "link_2", "link_3", "link_4", "link_5", "link_6" };
 
-        public (Vector3 pos, Quaternion rot) FlangePose => robot.PoseInBase(viewEe.position, viewEe.rotation);
+        /// <summary>Flange pose of the target state (in base_link).</summary>
+        public (Vector3 pos, Quaternion rot) FlangePose => AtTarget(() => robot.PoseInBase(viewEe.position, viewEe.rotation));
 
-        public (Vector3 pos, Quaternion rot) TcpPose
+        /// <summary>TCP pose of the target state (in base_link).</summary>
+        public (Vector3 pos, Quaternion rot) TcpPose => AtTarget(() =>
         {
-            get
-            {
-                Vector3 zWorld = viewEe.rotation * new Vector3(0, 0, 1).Ros2Unity();
-                return robot.PoseInBase(viewEe.position + zWorld * robot.tcpOffset, viewEe.rotation);
-            }
-        }
+            Vector3 zWorld = viewEe.rotation * new Vector3(0, 0, 1).Ros2Unity();
+            return robot.PoseInBase(viewEe.position + zWorld * robot.tcpOffset, viewEe.rotation);
+        });
     }
 }

@@ -176,21 +176,38 @@ namespace AR4Sim
                 client.Send(new JObject { ["id"] = id, ["ok"] = false, ["error"] = error }.ToString(Newtonsoft.Json.Formatting.None));
             if (overlay == null) { Fail("no Overlay in the scene"); return true; }
             if (Application.isBatchMode) { Fail("screenshot needs a window (player started with -batchmode)"); return true; }
-            StartCoroutine(overlay.Capture(tex =>
+            bool wait = (bool?)req["wait"] ?? true;   // false: capture now, also in the middle of a motion
+            var capture = overlay.Capture(tex =>
             {
                 var png = tex.EncodeToPNG();
                 int w = tex.width, h = tex.height;
                 Destroy(tex);
                 client.Send(new JObject { ["id"] = id, ["ok"] = true, ["png"] = Convert.ToBase64String(png), ["width"] = w, ["height"] = h }
                     .ToString(Newtonsoft.Json.Formatting.None));
-            }));
+            });
+            StartCoroutine(wait ? AfterAnimation(capture) : capture);
             return true;
+        }
+
+        bool Animating => ViewerMode && (view.Animating || objects.Any(o => o.Animating));
+
+        /// <summary>Wait until the viewer animation has finished, then run the coroutine (screenshots
+        /// show the final pose of the last state, as the user sees it).</summary>
+        System.Collections.IEnumerator AfterAnimation(System.Collections.IEnumerator then)
+        {
+            while (Animating) yield return null;
+            yield return then;
         }
 
         /// <summary>Viewer mode on/off: show the physics-free robot copy, make objects kinematic.</summary>
         void SetViewerMode(bool on)
         {
             if (ViewerMode == on) return;
+            if (!on)
+            {
+                view.Finish();
+                foreach (var o in objects) if (o.Animating) o.Finish();
+            }
             view.SetActive(on);
             foreach (var o in objects)
             {
@@ -262,8 +279,12 @@ namespace AR4Sim
                     // Show a state computed elsewhere: teleport robot and objects, no dynamics.
                     var q = FloatArray(req, "q", 6);
                     float g = (float?)req["gripper"] ?? robot.GripperMax;
+                    // duration > 0: the view moves smoothly from the shown pose to this state
+                    float duration = (float?)req["duration"] ?? 0f;
+                    if (duration < 0) throw new ArgumentException("duration must be >= 0");
                     SetViewerMode(true);
-                    view.SetState(q, g);
+                    view.SetState(q, g, duration);
+                    var ee = view.TargetEeWorld;
                     if (req["objects"] is JArray objs)
                         foreach (JObject o in objs)
                         {
@@ -274,8 +295,13 @@ namespace AR4Sim
                                 var p = FloatArray(o, "position", 3);
                                 var r = o["orientation"] != null ? FloatArray(o, "orientation", 4) : new[] { 0f, 0f, 0f, 1f };
                                 var baseT = robot.BaseLink;
-                                obj.SetWorldPose(baseT.TransformPoint(new Vector3(p[0], p[1], p[2]).Ros2Unity()),
-                                                 baseT.rotation * new Quaternion(r[0], r[1], r[2], r[3]).Ros2Unity());
+                                var wp = baseT.TransformPoint(new Vector3(p[0], p[1], p[2]).Ros2Unity());
+                                var wr = baseT.rotation * new Quaternion(r[0], r[1], r[2], r[3]).Ros2Unity();
+                                // attached: held in the gripper, moves rigidly with it during the animation
+                                if ((bool?)o["attached"] ?? false)
+                                    obj.AnimateTo(wp, wr, duration, view.Ee, ee.pos, ee.rot);
+                                else
+                                    obj.AnimateTo(wp, wr, duration);
                             }
                             if (o["visible"] != null) obj.SetVisible((bool)o["visible"]);
                         }
@@ -380,6 +406,11 @@ namespace AR4Sim
             if (SystemInfo.graphicsDeviceType == UnityEngine.Rendering.GraphicsDeviceType.Null)
                 throw new InvalidOperationException("no graphics device (started with -nographics)");
             int w = (int?)req["width"] ?? 640, h = (int?)req["height"] ?? 480;
+            if (ViewerMode)   // camera images show the current state, not an in-between pose
+            {
+                view.Finish();
+                foreach (var o in objects) if (o.Animating) o.Finish();
+            }
             var main = Camera.main;
             var cam = main;
             if (req["eye"] != null)
@@ -470,7 +501,8 @@ namespace AR4Sim
             var arr = new JArray();
             foreach (var o in objects)
             {
-                var (p, r) = robot.PoseInBase(o.transform.position, o.transform.rotation);
+                var (wp, wr) = ViewerMode ? o.TargetPose : (o.transform.position, o.transform.rotation);
+                var (p, r) = robot.PoseInBase(wp, wr);
                 var jo = Pose(p, r);
                 jo["name"] = o.name;
                 arr.Add(jo);
