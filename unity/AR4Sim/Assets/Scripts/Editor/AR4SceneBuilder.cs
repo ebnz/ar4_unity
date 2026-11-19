@@ -18,7 +18,7 @@ namespace AR4Sim.EditorTools
     {
         const string UrdfPath = "Assets/URDF/ar4/ar4.urdf";
         const string ScenePath = "Assets/Scenes/AR4.unity";
-        const string PlayerPath = "../Build/AR4Sim.x86_64";               // Linux
+        const string PlayerPath = "../Build/Linux/AR4Sim.x86_64";
         const string WindowsPlayerPath = "../Build/Windows/AR4Sim.exe";
         const string MacPlayerPath = "../Build/macOS/AR4Sim.app";
 

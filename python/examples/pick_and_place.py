@@ -15,7 +15,7 @@ DOWN = (np.pi, 0.0, 0.0)  # rpy: tool z pointing at the floor, jaws closing alon
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--launch", action="store_true", help="start unity/Build/AR4Sim.x86_64")
+    ap.add_argument("--launch", action="store_true", help="start unity/Build/Linux/AR4Sim.x86_64")
     ap.add_argument("--headless", action="store_true")
     ap.add_argument("--port", type=int, default=5005)
     args = ap.parse_args()

@@ -6,7 +6,7 @@ from pathlib import Path
 
 from .connection import Connection
 
-DEFAULT_PLAYER = Path(__file__).resolve().parents[2] / "unity" / "Build" / "AR4Sim.x86_64"
+DEFAULT_PLAYER = Path(__file__).resolve().parents[2] / "unity" / "Build" / "Linux" / "AR4Sim.x86_64"
 
 
 class SimProcess:

@@ -8,7 +8,7 @@ namespace AR4Sim
     /// <summary>
     /// On-screen overlay "Group | Task | date time | t" and a Screenshot button.
     /// The button hides itself during the capture, so the saved image shows the scene and the
-    /// overlay text only. Files go to Screenshots/ next to the player (Build/Screenshots) or,
+    /// overlay text only. Files go to Screenshots/ next to the player (e.g. Build/Linux/Screenshots) or,
     /// in the Editor, next to the project folder (unity/AR4Sim/Screenshots).
     /// </summary>
     public class Overlay : MonoBehaviour
@@ -23,7 +23,7 @@ namespace AR4Sim
         float messageUntil;
         GUIStyle textStyle, buttonStyle;
 
-        /// <summary>Screenshots/ next to the player (Linux: Build/, Windows: Build/Windows/,
+        /// <summary>Screenshots/ next to the player (Linux: Build/Linux/, Windows: Build/Windows/,
         /// macOS: next to AR4Sim.app, not inside it) or next to Assets/ in the Editor.</summary>
         public static string ScreenshotDir
         {

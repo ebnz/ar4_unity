@@ -68,7 +68,7 @@ tools/build_unity.sh                 # headless: imports the URDF, builds the sc
 
 The script expects the editor at `~/Unity/Hub/Editor/6000.3.28f1/Editor/Unity`. If yours is elsewhere,
 set `UNITY=/path/to/Editor/Unity`. The first run takes longer because Unity imports the project and
-resolves packages. Output: `unity/Build/AR4Sim.x86_64`. Logs: `unity/Logs/BuildScene.log` and
+resolves packages. Output: `unity/Build/Linux/AR4Sim.x86_64`. Logs: `unity/Logs/BuildScene.log` and
 `unity/Logs/BuildPlayer.log`. Use `--skip-scene` to rebuild only the player from the existing scene.
 
 Windows and macOS players: add `--windows` (`unity/Build/Windows/AR4Sim.exe`) and/or `--macos`
@@ -114,7 +114,7 @@ where Python says, and physics is not stepped. The reported `tcp_pose` matches i
 
 The window shows an overlay "Group | Task | date time | t" (set with `set_overlay`) and a
 **Screenshot** button. The button saves `Screenshots/<task>_<yyyyMMdd_HHmmss>.png` next to the player
-(`unity/Build/Screenshots/`), or `unity/AR4Sim/Screenshots/` in the Editor. `screenshot()` returns
+(`unity/Build/Linux/Screenshots/`, `unity/Build/Windows/Screenshots/` or `unity/Build/macOS/Screenshots/`), or `unity/AR4Sim/Screenshots/` in the Editor. `screenshot()` returns
 the same image to Python. Both need a window, i.e. not `-batchmode`.
 
 The scene contains a table (top at z = 0 of `base_link`), an open bin, and three 2 cm cubes. Table and
@@ -165,7 +165,7 @@ Any language that can open a socket can drive the sim, e.g. `echo '{"id":1,"cmd"
 
 ## Running the simulator
 
-- **Built player:** `unity/Build/AR4Sim.x86_64 [-port 5005] [-dt 0.01]`. Add `-batchmode -nographics`
+- **Built player:** `unity/Build/Linux/AR4Sim.x86_64 [-port 5005] [-dt 0.01]`. Add `-batchmode -nographics`
   for no window and no GPU, or only `-batchmode` for no window with rendering kept (`get_image` works).
   `SimProcess` does this for you.
 - **Unity Editor (6000.3.28f1, see Requirements):** open `unity/AR4Sim`, open scene `Assets/Scenes/AR4.unity`, press Play.

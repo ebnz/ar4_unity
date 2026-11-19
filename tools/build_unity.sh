@@ -27,6 +27,6 @@ for arg in "$@"; do
 done
 [[ $SCENE == 1 ]] && run BuildScene
 run BuildPlayer
-echo "player: $ROOT/unity/Build/AR4Sim.x86_64"
+echo "player: $ROOT/unity/Build/Linux/AR4Sim.x86_64"
 if [[ $WINDOWS == 1 ]]; then run BuildWindowsPlayer; echo "player: $ROOT/unity/Build/Windows/AR4Sim.exe"; fi
 if [[ $MACOS == 1 ]]; then run BuildMacPlayer; echo "player: $ROOT/unity/Build/macOS/AR4Sim.app"; fi
