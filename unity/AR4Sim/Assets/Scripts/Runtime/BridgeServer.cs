@@ -399,6 +399,7 @@ namespace AR4Sim
             try
             {
                 cam.targetTexture = rt;
+                cam.aspect = (float)w / h;   // fieldOfView is vertical: f = (h/2) / tan(fov/2), principal point at the center
                 cam.Render();
                 RenderTexture.active = rt;
                 var tex = new Texture2D(w, h, TextureFormat.RGB24, false);
@@ -411,6 +412,7 @@ namespace AR4Sim
             finally
             {
                 cam.targetTexture = prevTarget;
+                cam.ResetAspect();
                 RenderTexture.active = prevActive;
                 RenderTexture.ReleaseTemporary(rt);
                 if (cam != main) Destroy(cam.gameObject);
